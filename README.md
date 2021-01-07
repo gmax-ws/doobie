@@ -1,0 +1,1 @@
+## Scala Doobie CRUD example

@@ -1,30 +1,24 @@
-package scalable.solutions
+package scalable.solutions.module
 
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import com.typesafe.config.ConfigFactory
-import doobie._
 import doobie.implicits._
-import scalable.solutions.entity.{City, CityEntity, Country, CountryEntity}
+import scalable.solutions.Db
+import scalable.solutions.module.CityModule.City
+import scalable.solutions.module.CountryModule.Country
 
 import scala.concurrent.ExecutionContext
 
-object DoobieMain extends App {
+object DoobieModuleMain extends App {
 
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   val config = ConfigFactory.load()
-  val cfg = config.getConfig("db")
+  val xa = Db[IO](config)
 
-  val xa = Transactor.fromDriverManager[IO](
-    driver = cfg.getString("driver"),
-    url = cfg.getString("url"),
-    user = cfg.getString("username"),
-    pass = cfg.getString("password")
-  )
-
-  val country = CountryEntity()
-  val city = CityEntity()
+  val country = CountryModule.Service
+  val city = CityModule.Service
 
   val result = (country.drop(),
     country.create(),

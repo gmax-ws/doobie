@@ -1,10 +1,11 @@
 package scalable.solutions.module
 
+import cats.effect.IO
 import doobie.ConnectionIO
 import doobie.implicits._
 
 trait CityModule {
-  val city: CityModule.Service.type = CityModule.Service
+  val city: IO[CityModule.Service.type] = IO.pure(CityModule.Service)
 }
 
 object CityModule extends CityModule {

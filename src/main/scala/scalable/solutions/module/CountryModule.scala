@@ -1,10 +1,11 @@
 package scalable.solutions.module
 
+import cats.effect.IO
 import doobie.ConnectionIO
 import doobie.implicits._
 
 trait CountryModule {
-  val country: CountryModule.Service.type = CountryModule.Service
+  val country: IO[CountryModule.Service.type] = IO.pure(CountryModule.Service)
 }
 
 object CountryModule extends CountryModule {

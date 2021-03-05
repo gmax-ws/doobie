@@ -3,12 +3,14 @@ package scalable.solutions.module
 import cats.effect.IO
 import doobie.ConnectionIO
 import doobie.implicits._
+import doobie.util.fragment.Fragment
 
 trait CountryModule {
   val country: IO[CountryModule.Service.type] = IO.pure(CountryModule.Service)
 }
 
 object CountryModule extends CountryModule {
+
   case class Country(code: String, name: String, population: Long)
 
   trait Service[F[_]] {
@@ -28,16 +30,25 @@ object CountryModule extends CountryModule {
   }
 
   object Service extends CountryModule.Service[ConnectionIO] {
+    val columns: Seq[String] = Seq(
+      "code",
+      "name",
+      "population"
+    )
+
+    val columnsC: String = columns.mkString(", ")
+    val columnsF: Fragment = Fragment.const(columnsC)
+
     def find(n: String): ConnectionIO[Option[Country]] =
-      sql"SELECT code, name, population FROM country WHERE name = $n"
+      (fr"SELECT " ++ columnsF ++ fr" FROM country WHERE name = $n")
         .query[Country]
         .option
 
     def all(): ConnectionIO[List[Country]] =
-      sql"SELECT code, name, population FROM country".query[Country].to[List]
+      (fr"SELECT " ++ columnsF ++ fr" FROM country").query[Country].to[List]
 
     def insert(country: Country): ConnectionIO[Int] =
-      sql"INSERT INTO country (code, name, population) VALUES (${country.code}, ${country.name}, ${country.population})".update.run
+      (fr"INSERT INTO country (" ++ columnsF ++ fr") VALUES (${country.code}, ${country.name}, ${country.population})").update.run
 
     def update(country: Country): ConnectionIO[Int] =
       sql"UPDATE country SET name = ${country.name}, population = ${country.population} WHERE code = ${country.code}".update.run
@@ -53,4 +64,5 @@ object CountryModule extends CountryModule {
         name       VARCHAR NOT NULL UNIQUE,
         population BIGINT)""".update.run
   }
+
 }
